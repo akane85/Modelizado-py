@@ -5,7 +5,6 @@ import hashlib
 import pathlib
 import re
 import pandas as pd
-import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -14,11 +13,6 @@ import emoji
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report, confusion_matrix, roc_auc_score, average_precision_score, roc_curve, precision_recall_curve
 from sklearn.linear_model import LogisticRegression
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Embedding, Bidirectional, LSTM, Dense, Dropout
-from tensorflow.keras.preprocessing.text import Tokenizer
-from tensorflow.keras.preprocessing.sequence import pad_sequences
-from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
 from openai import OpenAI
 from getpass import getpass
 from typing import List
@@ -369,6 +363,7 @@ while True:
         break
     evaluar_frase(frase, modelo="LR")  # Se puede cambiar a "MLP" si queremos probar ese
     #evaluar_frase(frase, modelo="MLP")
+
 
 
 
