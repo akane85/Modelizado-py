@@ -1,46 +1,20 @@
 import streamlit as st
-import numpy as np
+from main_model import evaluar_frase
 
-from main_model import limpiar_texto, get_embeddings, clf, mlp, best_thr
+st.set_page_config(page_title="Detector de Ciberbullying")
 
-# --- CONFIG DE LA APP ---
-st.set_page_config(page_title="Detector de Cyberbullying")
+st.title("Detector de Ciberbullying")
+st.write("Evaluá frases y detectá si contienen **ciberbullying** usando embeddings y Machine Learning.")
 
-st.title("Detector de Cyberbullying")
-st.write("Ingresá una frase en inglés para evaluar si contiene ciberbullying.")
+user_text = st.text_area("Escribí una frase para analizar:", height=150)
 
-# Campo de texto
-frase = st.text_area("Texto a analizar", height=120)
-
-modelo = st.selectbox(
-    "Modelo a usar:",
-    ["Logistic Regression", "MLP (Neural Network)"]
-)
-
-if st.button("Evaluar frase"):
-    if not frase.strip():
+if st.button("Evaluar"):
+    if not user_text.strip():
         st.warning("Por favor escribí una frase.")
     else:
-        # limpiar texto
-        texto_limpio = limpiar_texto(frase)
-
-        # convertir a embeddings
-        emb = get_embeddings([texto_limpio])
-
-        # seleccionar modelo
-        if modelo == "Logistic Regression":
-            proba = clf.predict_proba(emb)[:, 1][0]
-            pred = int(proba >= best_thr)
-        else:
-            proba = float(mlp.predict(emb).ravel()[0])
-            pred = int(proba >= 0.5)
-
-        st.write("---")
-        st.subheader("Resultado")
+        pred, proba = evaluar_frase(user_text)
 
         if pred == 1:
-            st.error(f"**CIBERBULLYING**\n\n**Probabilidad:** `{proba:.3f}`")
+            st.error(f"**CIBERBULLYING**\nProbabilidad: {proba:.3f}")
         else:
-            st.success(f"**No es ciberbullying**\n\n**Probabilidad:** `{proba:.3f}`")
-
-
+            st.success(f"**No es ciberbullying**\nProbabilidad: {proba:.3f}")
