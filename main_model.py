@@ -1,20 +1,27 @@
 # type: ignore
 #el archivo original está en otra carpeta este contiene lo justo y necesario para deployarlo en Streamlit
-# main_model.py
+
+
+# main_model.py (versión compatible con Streamlit)
 import os
-import re
-import numpy as np
 import pandas as pd
-#import emoji
+import numpy as np
+import re
+import emoji
 from typing import List
 
-from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import roc_auc_score
+from sklearn.linear_model import LogisticRegression
+
+from openai import OpenAI
 from sentence_transformers import SentenceTransformer
 
+print(">>> Cargando main_model.py...")
 
+# -------------------------------------------------------
 # 1) LIMPIEZA DE TEXTO
+# -------------------------------------------------------
 
 def limpiar_texto(texto: str) -> str:
     t = texto.lower()
@@ -25,16 +32,22 @@ def limpiar_texto(texto: str) -> str:
     t = re.sub(r"\s+", " ", t).strip()
     return t
 
-# 2) EMBEDDINGS
+# -------------------------------------------------------
+# 2) EMBEDDINGS (OpenAI si existe API key, sino local)
+# -------------------------------------------------------
 
+# Intentamos inicializar OpenAI
 try:
-    from openai import OpenAI
     client = OpenAI()
     use_openai = True
+    print(">>> Usando embeddings de OpenAI")
 except:
     client = None
     use_openai = False
+    print(">>> API de OpenAI no disponible, usando modelo local")
 
+# Modelo local
+_local_model = SentenceTransformer("distiluse-base-multilingual-cased-v2")
 
 def embed_openai(texts: List[str]):
     r = client.embeddings.create(
@@ -43,10 +56,6 @@ def embed_openai(texts: List[str]):
     )
     return np.array([d.embedding for d in r.data], dtype=np.float32)
 
-
-_local_model = SentenceTransformer("distiluse-base-multilingual-cased-v2")
-
-
 def embed_local(texts: List[str]):
     return _local_model.encode(
         texts,
@@ -54,16 +63,20 @@ def embed_local(texts: List[str]):
         normalize_embeddings=True
     )
 
-
 def get_embeddings(texts: List[str]):
     if use_openai:
         return embed_openai(texts)
     return embed_local(texts)
 
+# -------------------------------------------------------
+# 3) CARGAR CSV Y ENTRENAR MODELO
+# -------------------------------------------------------
 
-# 3) ENTRENAR O CARGAR MODELO
+# Ruta robusta para Streamlit Cloud
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+CSV_PATH = os.path.join(BASE_DIR, "CyberBullying.csv")
 
-CSV_PATH = "CyberBullying.csv"
+print(">>> Leyendo CSV desde:", CSV_PATH)
 
 df = pd.read_csv(CSV_PATH)
 df["clean"] = df["Text"].astype(str).apply(limpiar_texto)
@@ -79,15 +92,16 @@ X_train, X_test, y_train, y_test = train_test_split(
 Xtr_emb = get_embeddings(X_train)
 Xte_emb = get_embeddings(X_test)
 
-# Modelo simple
+# Modelo
 clf = LogisticRegression(max_iter=2000, class_weight="balanced")
 clf.fit(Xtr_emb, y_train)
 
-# Evaluación
 roc = roc_auc_score(y_test, clf.predict_proba(Xte_emb)[:, 1])
-print("Modelo entrenado. ROC-AUC:", roc)
+print(">>> Modelo entrenado. ROC-AUC:", roc)
 
-# 4) FUNCIÓN PARA PREDICCIONES
+# -------------------------------------------------------
+# 4) FUNCIÓN PÚBLICA PARA APP.PY
+# -------------------------------------------------------
 
 def evaluar_frase(frase: str):
     t = limpiar_texto(frase)
@@ -95,10 +109,4 @@ def evaluar_frase(frase: str):
     proba = clf.predict_proba(emb)[0][1]
     pred = int(proba >= 0.5)
     return pred, proba
-
-
-
-
-
-
 
