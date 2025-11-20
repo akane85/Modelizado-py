@@ -6,7 +6,6 @@ import pathlib
 import re
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
 import seaborn as sns
 import emoji
 
@@ -16,7 +15,7 @@ from sklearn.linear_model import LogisticRegression
 from openai import OpenAI
 from getpass import getpass
 from typing import List
-from matplotlib.backends.backend_pdf import PdfPages
+
 
 
 
@@ -363,6 +362,7 @@ while True:
         break
     evaluar_frase(frase, modelo="LR")  # Se puede cambiar a "MLP" si queremos probar ese
     #evaluar_frase(frase, modelo="MLP")
+
 
 
 
