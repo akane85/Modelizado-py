@@ -5,7 +5,7 @@ import os
 import re
 import numpy as np
 import pandas as pd
-import emoji
+#import emoji
 from typing import List
 
 from sklearn.linear_model import LogisticRegression
@@ -95,6 +95,7 @@ def evaluar_frase(frase: str):
     proba = clf.predict_proba(emb)[0][1]
     pred = int(proba >= 0.5)
     return pred, proba
+
 
 
 
